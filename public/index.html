@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Risk Tracker — Canada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div class="header-title">
+        <span class="flag">🍁</span>
+        <div>
+          <h1>Weather Risk Tracker</h1>
+          <p>Canada Real-Time Risk Dashboard</p>
+        </div>
+      </div>
+      <div class="header-controls">
+        <select id="province-filter" title="Filter by province">
+          <option value="">All of Canada</option>
+        </select>
+        <button id="refresh-btn" onclick="loadData()">&#8635; Refresh</button>
+        <span id="last-updated" class="last-updated">Loading...</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="risk-cards">
+      <div class="risk-card">
+        <div class="risk-icon">&#9928;&#65039;</div>
+        <div class="risk-info">
+          <h3>Severe Storms</h3>
+          <div class="risk-badge" id="badge-storm">—</div>
+          <p id="count-storm">—</p>
+        </div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-icon">&#10052;&#65039;</div>
+        <div class="risk-info">
+          <h3>Winter Weather</h3>
+          <div class="risk-badge" id="badge-winter">—</div>
+          <p id="count-winter">—</p>
+        </div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-icon">&#128293;</div>
+        <div class="risk-info">
+          <h3>Wildfires &amp; Smoke</h3>
+          <div class="risk-badge" id="badge-wildfire">—</div>
+          <p id="count-wildfire">—</p>
+        </div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-icon">&#127754;</div>
+        <div class="risk-info">
+          <h3>Flooding</h3>
+          <div class="risk-badge" id="badge-flooding">—</div>
+          <p id="count-flooding">—</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-row">
+      <div class="stat-box">
+        <span class="stat-number" id="stat-total-alerts">—</span>
+        <span class="stat-label">Active Alerts</span>
+      </div>
+      <div class="stat-box accent-red">
+        <span class="stat-number" id="stat-extreme">—</span>
+        <span class="stat-label">Extreme</span>
+      </div>
+      <div class="stat-box accent-orange">
+        <span class="stat-number" id="stat-severe">—</span>
+        <span class="stat-label">Severe</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number" id="stat-fires">—</span>
+        <span class="stat-label">Active Fires</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number" id="stat-hectares">—</span>
+        <span class="stat-label">Hectares Burned</span>
+      </div>
+    </section>
+
+    <div class="content-grid">
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Active Alerts</h2>
+          <span class="panel-badge" id="alerts-count-badge">0</span>
+        </div>
+        <div id="alerts-list" class="alerts-list">
+          <div class="loading-msg"><div class="spinner"></div>Loading alerts…</div>
+        </div>
+      </section>
+
+      <div class="right-col">
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Wildfire Activity</h2>
+            <span class="source-tag">CWFIS</span>
+          </div>
+          <div id="wildfire-body" class="panel-body">
+            <div class="loading-msg"><div class="spinner"></div>Loading…</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Current Conditions</h2>
+            <span class="source-tag">Open-Meteo</span>
+          </div>
+          <div id="weather-list" class="weather-list">
+            <div class="loading-msg"><div class="spinner"></div>Loading…</div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Province &amp; Territory Overview</h2>
+      </div>
+      <div id="province-table-wrap" class="table-wrap">
+        <div class="loading-msg"><div class="spinner"></div>Loading…</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>
+      Data: <strong>Environment Canada (ECCC)</strong> &middot;
+      <strong>Open-Meteo</strong> &middot;
+      <strong>Canadian Wildland Fire Information System (CWFIS)</strong>
+    </p>
+    <p>Auto-refreshes every 5 minutes &middot; For official warnings visit <a href="https://weather.gc.ca" target="_blank" rel="noopener">weather.gc.ca</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
