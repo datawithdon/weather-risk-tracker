@@ -109,6 +109,15 @@ function categorizeAlert(event) {
   return 'other';
 }
 
+function riskColourToSeverity(colour) {
+  if (!colour) return 'Unknown';
+  const c = colour.toLowerCase();
+  if (c.includes('red'))    return 'Extreme';
+  if (c.includes('orange')) return 'Severe';
+  if (c.includes('yellow')) return 'Moderate';
+  return 'Minor';
+}
+
 async function fetchAlerts() {
   const cached = getCache('alerts');
   if (cached) return cached;
@@ -117,62 +126,30 @@ async function fetchAlerts() {
 
   try {
     const response = await axios.get(
-      'https://geo.weather.gc.ca/geomet?service=WFS&version=2.0.0&request=GetFeature&typeName=ALERTS&outputFormat=application/json&count=500',
-      { timeout: 12000, headers: { Accept: 'application/json' } }
+      'https://api.weather.gc.ca/collections/weather-alerts/items?limit=500&lang=en',
+      { timeout: 12000, headers: { Accept: 'application/geo+json' } }
     );
 
     const features = response.data?.features || [];
     for (const f of features) {
       const p = f.properties || {};
-      const areaDesc = p.info_area_description || p.areaDesc || p.area_description || p.AREA_DESC || '';
-      const event = p.info_event || p.event || p.EVENT || p.cap_event || 'Weather Alert';
+      const event = p.alert_name_en || p.alert_short_name_en || 'Weather Alert';
       alerts.push({
-        id: f.id || p.identifier,
+        id: p.id || f.id,
         event,
-        severity: p.info_severity || p.severity || p.SEVERITY || 'Unknown',
-        urgency: p.info_urgency || p.urgency || 'Unknown',
-        certainty: p.info_certainty || p.certainty || 'Unknown',
-        headline: p.info_headline || p.headline || '',
-        area: areaDesc,
-        onset: p.info_onset || p.onset || null,
-        expires: p.info_expires || p.expires || null,
-        province: guessProvince(areaDesc),
+        severity: riskColourToSeverity(p.risk_colour_en),
+        urgency: p.alert_type || 'Unknown',
+        certainty: 'Observed',
+        headline: (p.alert_text_en || '').split('\n')[0].substring(0, 200),
+        area: p.feature_name_en || '',
+        onset: p.validity_datetime || null,
+        expires: p.expiration_datetime || null,
+        province: p.province || guessProvince(p.feature_name_en || ''),
         category: categorizeAlert(event),
       });
     }
   } catch (err) {
-    console.error('[ECCC] GeoMet WFS failed:', err.message);
-  }
-
-  // Fallback: try MSC OGC API
-  if (alerts.length === 0) {
-    try {
-      const response = await axios.get(
-        'https://api.weather.gc.ca/collections/cap-alerts/items?limit=500&lang=en',
-        { timeout: 12000, headers: { Accept: 'application/geo+json' } }
-      );
-      const features = response.data?.features || [];
-      for (const f of features) {
-        const p = f.properties || {};
-        const areaDesc = p.area_desc || p.areaDesc || '';
-        const event = p.event || p.cap_event || 'Weather Alert';
-        alerts.push({
-          id: f.id,
-          event,
-          severity: p.severity || 'Unknown',
-          urgency: p.urgency || 'Unknown',
-          certainty: p.certainty || 'Unknown',
-          headline: p.headline || '',
-          area: areaDesc,
-          onset: p.onset || null,
-          expires: p.expires || null,
-          province: guessProvince(areaDesc),
-          category: categorizeAlert(event),
-        });
-      }
-    } catch (err) {
-      console.error('[ECCC] OGC API fallback failed:', err.message);
-    }
+    console.error('[ECCC] weather-alerts fetch failed:', err.message);
   }
 
   setCache('alerts', alerts);
@@ -247,25 +224,26 @@ async function fetchWildfires() {
 
   try {
     const res = await axios.get(
-      'https://cwfis.cfs.nrcan.gc.ca/geoserver/public/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=public:activefires_current&outputFormat=application/json&count=2000',
+      'https://cwfis.cfs.nrcan.gc.ca/geoserver/public/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=public:hotspots_24h&outputFormat=application/json&count=3000',
       { timeout: 20000, headers: { Accept: 'application/json' } }
     );
     const features = res.data?.features || [];
     for (const f of features) {
       const p = f.properties || {};
-      const coords = f.geometry?.coordinates;
-      const lat = coords?.[1];
-      const lon = coords?.[0];
+      const lat = p.lat || f.geometry?.coordinates?.[1];
+      const lon = p.lon || f.geometry?.coordinates?.[0];
       fires.push({
-        id: f.id,
+        id: f.id || p.uid,
         lat,
         lon,
-        fireName: p.firename || p.fire_name || p.FIRENAME || 'Active Fire',
-        province: p.pr_ab || p.province || p.PROVINCE || guessProvinceByCoord(lat, lon),
-        agency: p.agency || p.AGENCY || 'Unknown',
-        sizeHa: parseFloat(p.hectares || p.size_ha || p.HECTARES || 0) || 0,
-        stageOfControl: p.stage_of_control || p.stg_of_ctr || p.STAGEOFCONTROL || 'Unknown',
-        startDate: p.start_date || p.reported_date || null,
+        fireName: p.uid || 'Hotspot',
+        province: guessProvinceByCoord(parseFloat(lat), parseFloat(lon)),
+        agency: p.agency || 'Unknown',
+        sizeHa: parseFloat(p.estarea || p.estarea2 || 0) || 0,
+        fwi: parseFloat(p.fwi || 0) || 0,
+        frp: parseFloat(p.frp || 0) || 0,
+        reportedDate: p.rep_date || null,
+        stageOfControl: 'Active Hotspot',
       });
     }
   } catch (err) {
