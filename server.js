@@ -5,6 +5,8 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Only this computer can connect unless HOST is set (e.g. HOST=0.0.0.0 on a server).
+const HOST = process.env.HOST || '127.0.0.1';
 
 const CACHE = {};
 const CACHE_TTL = 5 * 60 * 1000;
@@ -357,7 +359,7 @@ app.get('/api/wildfires', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
   console.log(`Weather Risk Tracker → http://localhost:${PORT}`);
   console.log('Data sources: ECCC GeoMet · Open-Meteo · CWFIS');
 });

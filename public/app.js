@@ -32,7 +32,7 @@ async function api(endpoint) {
 function esc(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function fmt(n) {
@@ -153,12 +153,12 @@ function renderAlerts(alerts) {
 
   list.innerHTML = alerts.map(a => `
     <div class="alert-item">
-      <div class="sev-dot ${(a.severity || 'unknown').toLowerCase()}"></div>
+      <div class="sev-dot ${esc((a.severity || 'unknown').toLowerCase())}"></div>
       <div class="alert-body">
         <div class="alert-event">${esc(a.event)}</div>
         <div class="alert-tags">
-          <span class="tag tag-sev ${a.severity}">${esc(a.severity)}</span>
-          ${a.province ? `<span class="tag tag-prov">${a.province}</span>` : ''}
+          <span class="tag tag-sev ${esc(a.severity)}">${esc(a.severity)}</span>
+          ${a.province ? `<span class="tag tag-prov">${esc(a.province)}</span>` : ''}
           <span class="tag tag-cat">${esc(a.category || 'other')}</span>
         </div>
         ${a.headline ? `<div class="alert-sub">${esc(a.headline.substring(0, 100))}${a.headline.length > 100 ? '…' : ''}</div>` : ''}
@@ -184,14 +184,14 @@ function renderWeather(data) {
   list.innerHTML = data.map(w => {
     const temp = w.temperature !== undefined ? `${Math.round(w.temperature)}°C` : '—';
     const dots = (w.risks || []).map(r =>
-      `<span class="risk-dot" style="background:${levelColor(r.level)}" title="${r.type}: ${r.level}"></span>`
+      `<span class="risk-dot" style="background:${levelColor(r.level)}" title="${esc(r.type)}: ${esc(r.level)}"></span>`
     ).join('');
     const okLabel = dots ? '' : '<span style="font-size:.62rem;color:#94a3b8">OK</span>';
     return `
       <div class="weather-row">
         <div>
           <div class="weather-city">${esc(w.city)}</div>
-          <div class="weather-prov-code">${w.province}</div>
+          <div class="weather-prov-code">${esc(w.province)}</div>
         </div>
         <div class="weather-right">
           <div class="weather-temp">${wmoEmoji(w.weatherCode)} ${temp}</div>
@@ -217,7 +217,7 @@ function renderWildfires(fires, summaryData) {
   const provRows = topProvs.length
     ? topProvs.map(([code, n]) => `
         <div class="wf-prov-row">
-          <span>${PROVINCES[code] || code}</span>
+          <span>${esc(PROVINCES[code] || code)}</span>
           <span class="wf-count">${n}</span>
         </div>`).join('')
     : '<div class="empty-msg" style="padding:8px">No active fires detected</div>';
@@ -254,7 +254,7 @@ function renderProvinceTable(provinces) {
       const riskLevels = (p.weatherRisks || []).map(r => r.level);
       const maxLevel = riskLevels.length ? topLevel(riskLevels) : 'none';
       const dots = (p.weatherRisks || []).slice(0, 4).map(r =>
-        `<span style="width:8px;height:8px;border-radius:50%;background:${levelColor(r.level)};display:inline-block" title="${r.type}"></span>`
+        `<span style="width:8px;height:8px;border-radius:50%;background:${levelColor(r.level)};display:inline-block" title="${esc(r.type)}"></span>`
       ).join('');
       return { ...p, maxLevel, dots };
     })
